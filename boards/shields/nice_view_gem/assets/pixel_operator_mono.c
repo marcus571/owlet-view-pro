@@ -337,8 +337,8 @@ static const lv_font_fmt_txt_glyph_dsc_t glyph_dsc[] = {
     {.bitmap_index = 48, .adv_w = 128, .box_w = 5, .box_h = 5, .ofs_x = 1, .ofs_y = 2},
     {.bitmap_index = 52, .adv_w = 128, .box_w = 2, .box_h = 3, .ofs_x = 2, .ofs_y = -2},
     {.bitmap_index = 53, .adv_w = 128, .box_w = 4, .box_h = 1, .ofs_x = 2, .ofs_y = 4},
-    /* U+002E "." 原为 128，改为 64 (半角宽) */
-    {.bitmap_index = 54, .adv_w = 64, .box_w = 1, .box_h = 1, .ofs_x = 1, .ofs_y = 0},
+    /* U+002E "." 宽度改为 48 (3px)，去左边距 */
+    {.bitmap_index = 54, .adv_w = 48, .box_w = 1, .box_h = 1, .ofs_x = 0, .ofs_y = 0},
     {.bitmap_index = 55, .adv_w = 128, .box_w = 3, .box_h = 9, .ofs_x = 2, .ofs_y = 0},
     {.bitmap_index = 59, .adv_w = 128, .box_w = 5, .box_h = 9, .ofs_x = 1, .ofs_y = 0},
     {.bitmap_index = 65, .adv_w = 128, .box_w = 5, .box_h = 9, .ofs_x = 1, .ofs_y = 0},
@@ -350,7 +350,8 @@ static const lv_font_fmt_txt_glyph_dsc_t glyph_dsc[] = {
     {.bitmap_index = 101, .adv_w = 128, .box_w = 5, .box_h = 9, .ofs_x = 1, .ofs_y = 0},
     {.bitmap_index = 107, .adv_w = 128, .box_w = 5, .box_h = 9, .ofs_x = 1, .ofs_y = 0},
     {.bitmap_index = 113, .adv_w = 128, .box_w = 5, .box_h = 9, .ofs_x = 1, .ofs_y = 0},
-    {.bitmap_index = 119, .adv_w = 128, .box_w = 1, .box_h = 7, .ofs_x = 3, .ofs_y = 0},
+    /* U+003A ":" 宽度改为 64 (4px)，去左边距 */
+    {.bitmap_index = 119, .adv_w = 64, .box_w = 1, .box_h = 7, .ofs_x = 0, .ofs_y = 0},
     {.bitmap_index = 120, .adv_w = 128, .box_w = 2, .box_h = 9, .ofs_x = 2, .ofs_y = -2},
     {.bitmap_index = 123, .adv_w = 128, .box_w = 3, .box_h = 5, .ofs_x = 2, .ofs_y = 2},
     {.bitmap_index = 125, .adv_w = 128, .box_w = 4, .box_h = 3, .ofs_x = 2, .ofs_y = 3},
