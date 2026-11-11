@@ -16,6 +16,7 @@ struct zmk_widget_screen {
     lv_color_t cbuf[SCREEN_CANVAS_W * SCREEN_CANVAS_H];
     struct status_state state;
     enum screen_id current_screen;
+    bool user_override; /* 记录用户是否手动切离了充电屏 */
 };
 
 int zmk_widget_screen_init(struct zmk_widget_screen *widget, lv_obj_t *parent);
