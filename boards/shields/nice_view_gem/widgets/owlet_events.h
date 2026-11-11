@@ -6,6 +6,7 @@
 
 /* 主仓库下发的充电状态事件结构体 */
 struct owlet_charger_state_changed {
+    struct zmk_event_header header; /* ZMK 事件机制强制要求的头部，不可省略！ */
     bool     is_charging;       /* 是否在充电 */
     uint8_t  vbus_stat;         /* 1=USB, 3=Charger */
     uint8_t  chrg_stat;         /* 0=未充电, 1=预充, 2=快充, 3=充满 */
