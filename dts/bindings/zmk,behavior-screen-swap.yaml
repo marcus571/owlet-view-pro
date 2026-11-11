@@ -1,0 +1,6 @@
+# dts/bindings/zmk,behavior-screen-swap.yaml
+description: Screen swap behavior
+
+compatible: "zmk,behavior-screen-swap"
+
+properties: {}
