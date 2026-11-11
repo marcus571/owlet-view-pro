@@ -55,12 +55,12 @@ static void draw_all(lv_obj_t *widget_obj, struct zmk_widget_screen *screen_widg
     }
 }
 
-void zmk_widget_screen_toggle(void) {
+/* 用系统 work queue 来执行屏幕切换，防止中断上下文里操作 LVGL 卡死 */
+static void swap_work_handler(struct k_work *work) {
     struct zmk_widget_screen *widget;
     SYS_SLIST_FOR_EACH_CONTAINER(&widgets, widget, node) {
         widget->current_screen = (widget->current_screen == SCREEN_0) ? SCREEN_1 : SCREEN_0;
         
-        /* 如果用户在充电时手动切回了 SCREEN_0，开启用户覆盖保护 */
         if (widget->current_screen == SCREEN_0 && current_charger_state.is_charging) {
             widget->user_override = true;
         } else {
@@ -69,6 +69,13 @@ void zmk_widget_screen_toggle(void) {
         
         draw_all(widget->obj, widget);
     }
+}
+static K_WORK_DEFINE(swap_work, swap_work_handler);
+
+void zmk_widget_screen_toggle(void) {
+    /* 留下这行日志，方便你在串口看按键是否触发到了 C 代码 */
+    printk(">>> Screen swap key pressed! <<<\n");
+    k_work_submit(&swap_work);
 }
 
 /* 30秒延时切回 Screen 0 的工作队列 */
