@@ -1,13 +1,5 @@
 // boards/shields/nice_view_gem/widgets/screen.c
-/*
- * screen.c — 单 canvas 160×68 三栏布局调度
- *
- * 2026-11-09 更新：
- *   - 增加电量 UI 映射逻辑：>= 95% 时强制显示为 100%
- */
-
 #include <zephyr/kernel.h>
-
 #include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
@@ -28,8 +20,16 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #include "layer.h"
 #include "output.h"
 #include "screen.h"
+#include "screen_charge.h"
+#include "owlet_events.h"
+
+/* 必须实现事件类型，以便 ZMK 事件系统链接 */
+ZMK_EVENT_IMPL(owlet_charger_state_changed);
 
 static sys_slist_t widgets = SYS_SLIST_STATIC_INIT(&widgets);
+
+/* 保存最新的充电状态 */
+static struct owlet_charger_state_changed current_charger_state = {0};
 
 /* 分隔线 */
 #define SEPARATOR_Y        4
@@ -43,17 +43,78 @@ static void draw_separator(lv_obj_t *canvas, int x) {
     lv_canvas_draw_rect(canvas, x, SEPARATOR_Y, 1, SEPARATOR_H, &dsc);
 }
 
-static void draw_all(lv_obj_t *widget, const struct status_state *state) {
+static void draw_all(lv_obj_t *widget, struct zmk_widget_screen *screen_widget) {
     lv_obj_t *canvas = lv_obj_get_child(widget, 0);
     fill_background(canvas);
 
-    draw_battery_status(canvas, state);   /* 左栏 */
-    draw_output_status(canvas, state);    /* 中栏 */
-    draw_layer_status(canvas, state);     /* 右栏 */
-
-    draw_separator(canvas, SEPARATOR_LEFT_X);
-    draw_separator(canvas, SEPARATOR_RIGHT_X);
+    if (screen_widget->current_screen == SCREEN_0) {
+        draw_battery_status(canvas, &screen_widget->state);
+        draw_output_status(canvas, &screen_widget->state);
+        draw_layer_status(canvas, &screen_widget->state);
+        draw_separator(canvas, SEPARATOR_LEFT_X);
+        draw_separator(canvas, SEPARATOR_RIGHT_X);
+    } else {
+        draw_charge_screen(canvas, &current_charger_state);
+        draw_separator(canvas, SEPARATOR_LEFT_X);
+        draw_separator(canvas, SEPARATOR_RIGHT_X);
+    }
 }
+
+void zmk_widget_screen_toggle(void) {
+    struct zmk_widget_screen *widget;
+    SYS_SLIST_FOR_EACH_CONTAINER(&widgets, widget, node) {
+        widget->current_screen = (widget->current_screen == SCREEN_0) ? SCREEN_1 : SCREEN_0;
+        draw_all(widget->obj, widget);
+    }
+}
+
+/* 30秒延时切回 Screen 0 的工作队列 */
+static void revert_to_screen0_cb(struct k_work *work) {
+    struct zmk_widget_screen *widget;
+    SYS_SLIST_FOR_EACH_CONTAINER(&widgets, widget, node) {
+        if (widget->current_screen == SCREEN_1 && !current_charger_state.is_charging) {
+            widget->current_screen = SCREEN_0;
+            draw_all(widget->obj, widget);
+        }
+    }
+}
+static K_WORK_DELAYABLE_DEFINE(revert_work, revert_to_screen0_cb);
+
+/* 充电事件监听回调 */
+static int owlet_charger_listener_cb(const zmk_event_t *eh) {
+    const struct owlet_charger_state_changed *ev = as_owlet_charger_state_changed(eh);
+    if (ev) {
+        current_charger_state = *ev;
+        struct zmk_widget_screen *widget;
+
+        if (ev->is_charging) {
+            /* 正在充电：取消延时切回，强制切到 Screen 1 */
+            k_work_cancel_delayable(&revert_work);
+            SYS_SLIST_FOR_EACH_CONTAINER(&widgets, widget, node) {
+                if (widget->current_screen != SCREEN_1) {
+                    widget->current_screen = SCREEN_1;
+                }
+                /* 无论是本来就是1还是刚切过来，都重绘以刷新数据 */
+                draw_all(widget->obj, widget);
+            }
+        } else {
+            /* 充电结束：启动 30 秒延时回落 */
+            k_work_reschedule(&revert_work, K_SECONDS(30));
+            
+            /* 如果用户当前就在看 Screen 1，则立刻刷新一次数据让其看到状态变化 */
+            SYS_SLIST_FOR_EACH_CONTAINER(&widgets, widget, node) {
+                if (widget->current_screen == SCREEN_1) {
+                    draw_all(widget->obj, widget);
+                }
+            }
+        }
+    }
+    return ZMK_EV_EVENT_BUBBLE;
+}
+
+ZMK_LISTENER(owlet_charger_ui, owlet_charger_listener_cb);
+ZMK_SUBSCRIPTION(owlet_charger_ui, owlet_charger_state_changed);
+
 
 static void set_battery_status(struct zmk_widget_screen *widget,
                                struct battery_status_state state) {
@@ -61,7 +122,7 @@ static void set_battery_status(struct zmk_widget_screen *widget,
     widget->state.charging = state.usb_present;
 #endif
     widget->state.battery = state.level;
-    draw_all(widget->obj, &widget->state);
+    draw_all(widget->obj, widget);
 }
 
 static void battery_status_update_cb(struct battery_status_state state) {
@@ -71,10 +132,8 @@ static void battery_status_update_cb(struct battery_status_state state) {
 
 static struct battery_status_state battery_status_get_state(const zmk_event_t *eh) {
     const struct zmk_battery_state_changed *ev = as_zmk_battery_state_changed(eh);
-    
     uint8_t level = (ev != NULL) ? ev->state_of_charge : zmk_battery_state_of_charge();
     
-    /* MAX17048 充满时通常停留在 95%~99%，映射为 100% 以满足强迫症 */
     if (level >= 95) {
         level = 100;
     }
@@ -97,7 +156,7 @@ ZMK_SUBSCRIPTION(widget_battery_status, zmk_usb_conn_state_changed);
 static void set_layer_status(struct zmk_widget_screen *widget, struct layer_status_state state) {
     widget->state.layer_index = state.index;
     widget->state.layer_mask = state.layer_mask;
-    draw_all(widget->obj, &widget->state);
+    draw_all(widget->obj, widget);
 }
 
 static void layer_status_update_cb(struct layer_status_state state) {
@@ -109,7 +168,6 @@ static struct layer_status_state layer_status_get_state(const zmk_event_t *eh) {
     uint8_t index = zmk_keymap_highest_layer_active();
     uint32_t mask = zmk_keymap_layer_state();
     
-    /* 强制包含基础层和当前最高层 */
     mask |= (1U << zmk_keymap_layer_default());
     mask |= (1U << index);
 
@@ -129,7 +187,7 @@ static void set_output_status(struct zmk_widget_screen *widget,
     widget->state.active_profile_index = state->active_profile_index;
     widget->state.active_profile_connected = state->active_profile_connected;
     widget->state.active_profile_bonded = state->active_profile_bonded;
-    draw_all(widget->obj, &widget->state);
+    draw_all(widget->obj, widget);
 }
 
 static void output_status_update_cb(struct output_status_state state) {
@@ -159,6 +217,8 @@ ZMK_SUBSCRIPTION(widget_output_status, zmk_ble_active_profile_changed);
 int zmk_widget_screen_init(struct zmk_widget_screen *widget, lv_obj_t *parent) {
     widget->obj = lv_obj_create(parent);
     lv_obj_set_size(widget->obj, SCREEN_CANVAS_W, SCREEN_CANVAS_H);
+    
+    widget->current_screen = SCREEN_0; /* 默认启动 Screen 0 */
 
     lv_obj_t *canvas = lv_canvas_create(widget->obj);
     lv_obj_align(canvas, LV_ALIGN_TOP_LEFT, 0, 0);
@@ -172,13 +232,14 @@ int zmk_widget_screen_init(struct zmk_widget_screen *widget, lv_obj_t *parent) {
 
     struct status_state initial_state = {0};
     
-    // 初始化时也应用映射逻辑
     uint8_t init_level = zmk_battery_state_of_charge();
     initial_state.battery = (init_level >= 95) ? 100 : init_level;
     
     initial_state.layer_index = zmk_keymap_highest_layer_active();
     initial_state.layer_mask = (1U << zmk_keymap_layer_default()) | (1U << initial_state.layer_index);
-    draw_all(widget->obj, &initial_state);
+    widget->state = initial_state;
+    
+    draw_all(widget->obj, widget);
 
     return 0;
 }
