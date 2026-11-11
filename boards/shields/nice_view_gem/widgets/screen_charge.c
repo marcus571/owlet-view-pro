@@ -64,7 +64,7 @@ void draw_charge_screen(lv_obj_t *canvas, const struct owlet_charger_state_chang
     snprintf(text, sizeof(text), "SOC: %u%%", state->battery_soc);
     lv_canvas_draw_text(canvas, 84, 8, 72, &label_dsc, text);
 
-    // 2. 充电状态 (精简文案防溢出)
+    // 2. 充电状态
     const char *chrg_str = "IDLE";
     if (state->chrg_stat == 1) {
         chrg_str = "PRE";
