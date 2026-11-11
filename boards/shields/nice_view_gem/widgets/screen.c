@@ -23,9 +23,6 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #include "screen_charge.h"
 #include "owlet_events.h"
 
-/* 必须实现事件类型，以便 ZMK 事件系统链接 */
-ZMK_EVENT_IMPL(owlet_charger_state_changed);
-
 static sys_slist_t widgets = SYS_SLIST_STATIC_INIT(&widgets);
 
 /* 保存最新的充电状态 */
@@ -43,8 +40,8 @@ static void draw_separator(lv_obj_t *canvas, int x) {
     lv_canvas_draw_rect(canvas, x, SEPARATOR_Y, 1, SEPARATOR_H, &dsc);
 }
 
-static void draw_all(lv_obj_t *widget, struct zmk_widget_screen *screen_widget) {
-    lv_obj_t *canvas = lv_obj_get_child(widget, 0);
+static void draw_all(lv_obj_t *widget_obj, struct zmk_widget_screen *screen_widget) {
+    lv_obj_t *canvas = lv_obj_get_child(widget_obj, 0);
     fill_background(canvas);
 
     if (screen_widget->current_screen == SCREEN_0) {
@@ -55,8 +52,6 @@ static void draw_all(lv_obj_t *widget, struct zmk_widget_screen *screen_widget) 
         draw_separator(canvas, SEPARATOR_RIGHT_X);
     } else {
         draw_charge_screen(canvas, &current_charger_state);
-        draw_separator(canvas, SEPARATOR_LEFT_X);
-        draw_separator(canvas, SEPARATOR_RIGHT_X);
     }
 }
 
@@ -94,14 +89,13 @@ static int owlet_charger_listener_cb(const zmk_event_t *eh) {
                 if (widget->current_screen != SCREEN_1) {
                     widget->current_screen = SCREEN_1;
                 }
-                /* 无论是本来就是1还是刚切过来，都重绘以刷新数据 */
                 draw_all(widget->obj, widget);
             }
         } else {
             /* 充电结束：启动 30 秒延时回落 */
             k_work_reschedule(&revert_work, K_SECONDS(30));
             
-            /* 如果用户当前就在看 Screen 1，则立刻刷新一次数据让其看到状态变化 */
+            /* 如果当前就在看 Screen 1，立刻刷新一次以显示拔出的状态 */
             SYS_SLIST_FOR_EACH_CONTAINER(&widgets, widget, node) {
                 if (widget->current_screen == SCREEN_1) {
                     draw_all(widget->obj, widget);
