@@ -53,6 +53,9 @@ static void draw_all(lv_obj_t *widget_obj, struct zmk_widget_screen *screen_widg
     } else {
         draw_charge_screen(canvas, &current_charger_state);
     }
+    
+    /* 强制 LVGL 刷新该区域，解决修改了 cbuf 但不刷屏的问题 */
+    lv_obj_invalidate(widget_obj);
 }
 
 /* 用系统 work queue 来执行屏幕切换，防止中断上下文里操作 LVGL 卡死 */
