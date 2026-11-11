@@ -4,7 +4,7 @@
 #include <zephyr/kernel.h>
 #include <zmk/event_manager.h>
 
-/* 主仓库下发的充电状态事件结构体 (按照最新对接文档) */
+/* 主仓库下发的充电状态事件结构体 */
 struct owlet_charger_state_changed {
     bool     is_charging;       /* 是否在充电 */
     uint8_t  vbus_stat;         /* 1=USB, 3=Charger */
