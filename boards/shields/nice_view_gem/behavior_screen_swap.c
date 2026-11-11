@@ -24,7 +24,7 @@ static const struct behavior_driver_api behavior_screen_swap_api = {
 };
 
 #define SCREEN_SWAP_INST(n)                                                                        \
-    DEVICE_DT_INST_DEFINE(n, NULL, NULL, NULL, NULL, POST_KERNEL,                                  \
-                          CONFIG_KERNEL_INIT_PRIORITY_DEFAULT, &behavior_screen_swap_api);
+    BEHAVIOR_DT_INST_DEFINE(n, NULL, NULL, NULL, NULL, POST_KERNEL,                                \
+                            CONFIG_KERNEL_INIT_PRIORITY_DEFAULT, &behavior_screen_swap_api);
 
 DT_INST_FOREACH_STATUS_OKAY(SCREEN_SWAP_INST)
