@@ -19,4 +19,11 @@
     chosen {
         zephyr,display = &nice_view;
     };
+
+    behaviors {
+        screen_swap: screen_swap {
+            compatible = "zmk,behavior-screen-swap";
+            #binding-cells = <0>;
+        };
+    };
 };
