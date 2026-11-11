@@ -59,6 +59,14 @@ void zmk_widget_screen_toggle(void) {
     struct zmk_widget_screen *widget;
     SYS_SLIST_FOR_EACH_CONTAINER(&widgets, widget, node) {
         widget->current_screen = (widget->current_screen == SCREEN_0) ? SCREEN_1 : SCREEN_0;
+        
+        /* 如果用户在充电时手动切回了 SCREEN_0，开启用户覆盖保护 */
+        if (widget->current_screen == SCREEN_0 && current_charger_state.is_charging) {
+            widget->user_override = true;
+        } else {
+            widget->user_override = false;
+        }
+        
         draw_all(widget->obj, widget);
     }
 }
@@ -83,16 +91,24 @@ static int owlet_charger_listener_cb(const zmk_event_t *eh) {
         struct zmk_widget_screen *widget;
 
         if (ev->is_charging) {
-            /* 正在充电：取消延时切回，强制切到 Screen 1 */
+            /* 正在充电：取消延时切回 */
             k_work_cancel_delayable(&revert_work);
+            
             SYS_SLIST_FOR_EACH_CONTAINER(&widgets, widget, node) {
-                if (widget->current_screen != SCREEN_1) {
+                /* 只有用户没有手动切走时，才强制锁定在 SCREEN_1 */
+                if (!widget->user_override && widget->current_screen != SCREEN_1) {
                     widget->current_screen = SCREEN_1;
                 }
+                /* 无论如何都要重绘以刷新实时数据 */
                 draw_all(widget->obj, widget);
             }
         } else {
-            /* 充电结束：启动 30 秒延时回落 */
+            /* 充电结束：重置用户覆盖标志 */
+            SYS_SLIST_FOR_EACH_CONTAINER(&widgets, widget, node) {
+                widget->user_override = false;
+            }
+            
+            /* 启动 30 秒延时回落 */
             k_work_reschedule(&revert_work, K_SECONDS(30));
             
             /* 如果当前就在看 Screen 1，立刻刷新一次以显示拔出的状态 */
@@ -213,6 +229,7 @@ int zmk_widget_screen_init(struct zmk_widget_screen *widget, lv_obj_t *parent) {
     lv_obj_set_size(widget->obj, SCREEN_CANVAS_W, SCREEN_CANVAS_H);
     
     widget->current_screen = SCREEN_0; /* 默认启动 Screen 0 */
+    widget->user_override = false;
 
     lv_obj_t *canvas = lv_canvas_create(widget->obj);
     lv_obj_align(canvas, LV_ALIGN_TOP_LEFT, 0, 0);
