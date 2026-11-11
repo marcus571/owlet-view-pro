@@ -34,7 +34,7 @@ void draw_charge_screen(lv_obj_t *canvas, const struct owlet_charger_state_chang
     init_rect_dsc(&line_dsc, LVGL_FOREGROUND);
     lv_canvas_draw_rect(canvas, 80, 4, 1, 61, &line_dsc);
 
-    /* --- 左栏 (X = 4, 宽 72) --- */
+    /* --- 左栏 (X = 4, 宽 74) --- */
     
     // 1. 充电接口类型
     const char *type_str = "UNK";
@@ -43,28 +43,28 @@ void draw_charge_screen(lv_obj_t *canvas, const struct owlet_charger_state_chang
     } else if (state->vbus_stat == 3) {
         type_str = "CHG";
     }
-    snprintf(text, sizeof(text), "Type: %s", type_str);
-    lv_canvas_draw_text(canvas, 4, 8, 72, &label_dsc, text);
+    snprintf(text, sizeof(text), "Type:%s", type_str); // 去空格
+    lv_canvas_draw_text(canvas, 4, 8, 74, &label_dsc, text);
 
     // 2. 设定的充电电流 (使用 ichg_ma)
     char cur_str[16];
     format_current(cur_str, sizeof(cur_str), state->ichg_ma);
-    snprintf(text, sizeof(text), "Set: %s", cur_str);
-    lv_canvas_draw_text(canvas, 4, 28, 72, &label_dsc, text);
+    snprintf(text, sizeof(text), "Set:%s", cur_str); // 去空格
+    lv_canvas_draw_text(canvas, 4, 28, 74, &label_dsc, text);
 
     // 3. 充电时长
     char time_str[16];
     format_duration(time_str, sizeof(time_str), state->charge_duration_s);
-    snprintf(text, sizeof(text), "Time: %s", time_str);
-    lv_canvas_draw_text(canvas, 4, 48, 72, &label_dsc, text);
+    snprintf(text, sizeof(text), "Time:%s", time_str); // 去空格
+    lv_canvas_draw_text(canvas, 4, 48, 74, &label_dsc, text);
 
-    /* --- 右栏 (X = 84, 宽 72) --- */
+    /* --- 右栏 (X = 84, 宽 74) --- */
 
     // 1. 电池电量
-    snprintf(text, sizeof(text), "SOC: %u%%", state->battery_soc);
-    lv_canvas_draw_text(canvas, 84, 8, 72, &label_dsc, text);
+    snprintf(text, sizeof(text), "SOC:%u%%", state->battery_soc); // 去空格
+    lv_canvas_draw_text(canvas, 84, 8, 74, &label_dsc, text);
 
-    // 2. 充电状态
+    // 2. 充电状态 (精简文案)
     const char *chrg_str = "IDLE";
     if (state->chrg_stat == 1) {
         chrg_str = "PRE";
@@ -73,10 +73,10 @@ void draw_charge_screen(lv_obj_t *canvas, const struct owlet_charger_state_chang
     } else if (state->chrg_stat == 3) {
         chrg_str = "FULL";
     }
-    snprintf(text, sizeof(text), "Chg: %s", chrg_str);
-    lv_canvas_draw_text(canvas, 84, 28, 72, &label_dsc, text);
+    snprintf(text, sizeof(text), "Chg:%s", chrg_str); // 去空格
+    lv_canvas_draw_text(canvas, 84, 28, 74, &label_dsc, text);
 
     // 3. 电池温度
-    snprintf(text, sizeof(text), "Temp: %dC", state->battery_temp_c);
-    lv_canvas_draw_text(canvas, 84, 48, 72, &label_dsc, text);
+    snprintf(text, sizeof(text), "Temp:%dC", state->battery_temp_c); // 去空格
+    lv_canvas_draw_text(canvas, 84, 48, 74, &label_dsc, text);
 }
