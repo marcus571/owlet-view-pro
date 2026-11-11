@@ -1,7 +1,10 @@
 // boards/shields/nice_view_gem/behavior_screen_swap.c
 #include <zephyr/kernel.h>
 #include <zmk/behavior.h>
+#include <zmk/behavior_driver.h>
 #include "widgets/screen.h"
+
+#define DT_DRV_COMPAT zmk_behavior_screen_swap
 
 static int on_keymap_binding_pressed(struct zmk_behavior_binding *binding,
                                      struct zmk_behavior_binding_event event) {
@@ -26,5 +29,4 @@ static const struct zmk_behavior_driver_api behavior_screen_swap_api = {
     DEVICE_DT_INST_DEFINE(n, NULL, NULL, NULL, NULL, POST_KERNEL,                                  \
                           CONFIG_KERNEL_INIT_PRIORITY_DEFAULT, &behavior_screen_swap_api);
 
-#define DT_DRV_COMPAT zmk_behavior_screen_swap
 DT_INST_FOREACH_STATUS_OKAY(SCREEN_SWAP_INST)
