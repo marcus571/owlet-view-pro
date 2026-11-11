@@ -337,7 +337,8 @@ static const lv_font_fmt_txt_glyph_dsc_t glyph_dsc[] = {
     {.bitmap_index = 48, .adv_w = 128, .box_w = 5, .box_h = 5, .ofs_x = 1, .ofs_y = 2},
     {.bitmap_index = 52, .adv_w = 128, .box_w = 2, .box_h = 3, .ofs_x = 2, .ofs_y = -2},
     {.bitmap_index = 53, .adv_w = 128, .box_w = 4, .box_h = 1, .ofs_x = 2, .ofs_y = 4},
-    {.bitmap_index = 54, .adv_w = 128, .box_w = 1, .box_h = 1, .ofs_x = 3, .ofs_y = 0},
+    /* U+002E "." 原为 128，改为 64 (半角宽) */
+    {.bitmap_index = 54, .adv_w = 64, .box_w = 1, .box_h = 1, .ofs_x = 1, .ofs_y = 0},
     {.bitmap_index = 55, .adv_w = 128, .box_w = 3, .box_h = 9, .ofs_x = 2, .ofs_y = 0},
     {.bitmap_index = 59, .adv_w = 128, .box_w = 5, .box_h = 9, .ofs_x = 1, .ofs_y = 0},
     {.bitmap_index = 65, .adv_w = 128, .box_w = 5, .box_h = 9, .ofs_x = 1, .ofs_y = 0},
