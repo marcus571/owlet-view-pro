@@ -73,8 +73,6 @@ static void swap_work_handler(struct k_work *work) {
 static K_WORK_DEFINE(swap_work, swap_work_handler);
 
 void zmk_widget_screen_toggle(void) {
-    /* 留下这行日志，方便你在串口看按键是否触发到了 C 代码 */
-    printk(">>> Screen swap key pressed! <<<\n");
     k_work_submit(&swap_work);
 }
 
