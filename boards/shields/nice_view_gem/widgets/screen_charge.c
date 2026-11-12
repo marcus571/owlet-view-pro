@@ -76,12 +76,8 @@ void draw_charge_screen(lv_obj_t *canvas, const struct owlet_charger_state_chang
     snprintf(text, sizeof(text), "Chg:%s", chrg_str); 
     lv_canvas_draw_text(canvas, 84, 28, 76, &label_dsc, text);
 
-    // 3. 电池温度
-    int temp = state->battery_temp_c;
-    if (temp < 0) {
-        snprintf(text, sizeof(text), "Temp:-%d.%dC", -temp / 10, -temp % 10);
-    } else {
-        snprintf(text, sizeof(text), "Temp:%d.%dC", temp / 10, temp % 10);
-    }
+    // 3. 电池电压 (替换原温度，使用整数运算实现两位小数显示)
+    uint16_t mv = state->battery_voltage_mv;
+    snprintf(text, sizeof(text), "Volt:%u.%02uV", mv / 1000, (mv % 1000) / 10);
     lv_canvas_draw_text(canvas, 84, 48, 76, &label_dsc, text);
 }
