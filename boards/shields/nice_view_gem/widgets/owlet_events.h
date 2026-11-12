@@ -5,9 +5,9 @@
 
 struct owlet_charger_state_changed {
     bool     is_charging;       /* true=充电中, false=未充电 */
-    uint8_t  vbus_stat;         /* 1=SDP(电脑), 3=DCP(充电器), 0=未知 */
-    uint8_t  chrg_stat;         /* 0=未充电, 1=预充, 2=快充, 3=充满 */
-    uint16_t iindpm_ma;         /* 设定输入限流 (mA) */
+    uint8_t  vbus_stat;         /* 接口类型枚举 (1=SDP, 2=CDP, 3=DCP, 0=未知) */
+    uint8_t  raw_vbus;          /* 新增：BQ25601D REG08 原始寄存器检测值 */
+    uint8_t  chrg_stat;         /* 充电阶段 (0=未充, 1=预充, 2=快充, 3=充满) */
     uint16_t ichg_ma;           /* 设定电池充电电流 (mA) */
     uint8_t  battery_soc;       /* 电量百分比 0-100 */
     int16_t  battery_temp_c;    /* 电池温度 (℃) */
