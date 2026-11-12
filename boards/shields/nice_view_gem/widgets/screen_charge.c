@@ -36,14 +36,8 @@ void draw_charge_screen(lv_obj_t *canvas, const struct owlet_charger_state_chang
 
     /* --- 左栏 (X = 4, 宽 76) --- */
     
-    // 1. 充电接口类型
-    const char *type_str = "UNK";
-    if (state->vbus_stat == 1) {
-        type_str = "USB";
-    } else if (state->vbus_stat == 3) {
-        type_str = "CHG";
-    }
-    snprintf(text, sizeof(text), "Type:%s", type_str); 
+    // 1. 充电接口类型 (暂改为直接显示 raw_vbus 原始值)
+    snprintf(text, sizeof(text), "Type:%u", state->raw_vbus); 
     lv_canvas_draw_text(canvas, 4, 8, 76, &label_dsc, text);
 
     // 2. 设定的充电电流 (使用 ichg_ma)
@@ -76,7 +70,7 @@ void draw_charge_screen(lv_obj_t *canvas, const struct owlet_charger_state_chang
     snprintf(text, sizeof(text), "Chg:%s", chrg_str); 
     lv_canvas_draw_text(canvas, 84, 28, 76, &label_dsc, text);
 
-    // 3. 电池温度 (空间够了，恢复 Temp:)
+    // 3. 电池温度 (恢复 Temp:)
     int temp = state->battery_temp_c;
     if (temp < 0) {
         snprintf(text, sizeof(text), "Temp:-%d.%dC", -temp / 10, -temp % 10);
