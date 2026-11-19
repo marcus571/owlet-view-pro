@@ -21,7 +21,9 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #include "output.h"
 #include "screen.h"
 #include "screen_charge.h"
-#include "owlet_events.h"
+
+/* 直接引用主仓库暴露出来的头文件 */
+#include "owlet_charger_event.h"
 
 static sys_slist_t widgets = SYS_SLIST_STATIC_INIT(&widgets);
 
