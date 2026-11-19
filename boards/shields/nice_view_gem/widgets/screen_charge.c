@@ -64,7 +64,7 @@ void draw_charge_screen(lv_obj_t *canvas, const struct owlet_charger_state_chang
     snprintf(text, sizeof(text), "SOC:%u%%", state->battery_soc); 
     lv_canvas_draw_text(canvas, 84, 8, 76, &label_dsc, text);
 
-    // 2. 充电状态 (精简文案)
+    // 2. 充电状态
     const char *chrg_str = "IDLE";
     if (state->chrg_stat == 1) {
         chrg_str = "PRE";
@@ -76,7 +76,7 @@ void draw_charge_screen(lv_obj_t *canvas, const struct owlet_charger_state_chang
     snprintf(text, sizeof(text), "Chg:%s", chrg_str); 
     lv_canvas_draw_text(canvas, 84, 28, 76, &label_dsc, text);
 
-    // 3. 电池电压 (替换原温度，使用整数运算实现两位小数显示)
+    // 3. 电池电压 (使用整数运算格式化小数)
     uint16_t mv = state->battery_voltage_mv;
     snprintf(text, sizeof(text), "Volt:%u.%02uV", mv / 1000, (mv % 1000) / 10);
     lv_canvas_draw_text(canvas, 84, 48, 76, &label_dsc, text);
