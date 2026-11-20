@@ -76,8 +76,7 @@ void draw_charge_screen(lv_obj_t *canvas, const struct owlet_charger_state_chang
     snprintf(text, sizeof(text), "Chg:%s", chrg_str); 
     lv_canvas_draw_text(canvas, 84, 28, 76, &label_dsc, text);
 
-    // 3. 电池电压
-    uint16_t mv = state->battery_voltage_mv;
-    snprintf(text, sizeof(text), "Volt:%u.%02uV", mv / 1000, (mv % 1000) / 10);
+    // 3. 临时替换：显示结构体大小 (正常应该是 16)
+    snprintf(text, sizeof(text), "Size:%u", (unsigned int)sizeof(struct owlet_charger_state_changed));
     lv_canvas_draw_text(canvas, 84, 48, 76, &label_dsc, text);
 }
