@@ -25,6 +25,9 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 /* 直接引用主仓库暴露出来的头文件 */
 #include "owlet_charger_event.h"
 
+/* 调试用：统计回调触发次数 */
+volatile uint32_t debug_recv_count = 0;
+
 static sys_slist_t widgets = SYS_SLIST_STATIC_INIT(&widgets);
 
 /* 保存最新的充电状态 */
@@ -95,6 +98,9 @@ static K_WORK_DELAYABLE_DEFINE(revert_work, revert_to_screen0_cb);
 
 /* 充电事件监听回调 */
 static int owlet_charger_listener_cb(const zmk_event_t *eh) {
+    /* 调试：每收到一次事件，计数加一 */
+    debug_recv_count++;
+
     const struct owlet_charger_state_changed *ev = as_owlet_charger_state_changed(eh);
     if (ev) {
         current_charger_state = *ev;
