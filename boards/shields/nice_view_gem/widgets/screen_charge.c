@@ -4,6 +4,9 @@
 #include "../assets/custom_fonts.h"
 #include <stdio.h>
 
+/* 引入外部调试变量 */
+extern volatile uint32_t debug_recv_count;
+
 /* 提取并格式化电流值 */
 static void format_current(char *buf, size_t len, uint16_t current_ma) {
     if (current_ma < 1000) {
@@ -76,7 +79,7 @@ void draw_charge_screen(lv_obj_t *canvas, const struct owlet_charger_state_chang
     snprintf(text, sizeof(text), "Chg:%s", chrg_str); 
     lv_canvas_draw_text(canvas, 84, 28, 76, &label_dsc, text);
 
-    // 3. 临时替换：显示结构体大小 (正常应该是 16)
-    snprintf(text, sizeof(text), "Size:%u", (unsigned int)sizeof(struct owlet_charger_state_changed));
+    // 3. 临时替换：显示回调触发次数 (如果有数字，说明事件绝对到了)
+    snprintf(text, sizeof(text), "Cnt:%u", debug_recv_count);
     lv_canvas_draw_text(canvas, 84, 48, 76, &label_dsc, text);
 }
