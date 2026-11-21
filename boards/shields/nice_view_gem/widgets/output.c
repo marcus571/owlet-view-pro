@@ -4,6 +4,10 @@
  *
  * 2026-11-08 修改：
  *   - 移除留白，中栏中心 X=79。
+ * 2026-11-21 修改：
+ *   - USB 图标改由 usb_hid_ready 驱动。ZMK v0.3 中 ZMK_TRANSPORT_USB=0，
+ *     端点结构零初始化时 transport 恰为 USB，开机早期读取会误显示图标；
+ *     改用 zmk_usb_is_hid_ready() 的真实状态后彻底消除。
  */
 
 #include <zephyr/kernel.h>
@@ -75,7 +79,8 @@ static void draw_usb_icon(lv_obj_t *canvas) {
 }
 
 void draw_output_status(lv_obj_t *canvas, const struct status_state *state) {
-    bool usb_mode = (state->selected_endpoint.transport == ZMK_TRANSPORT_USB);
+    /* 以真实 USB 枚举状态为准，而非可能未初始化的端点选择结果 */
+    bool usb_mode = state->usb_hid_ready;
 
     if (usb_mode) {
         draw_bt_large(canvas, state, BT_LARGE_Y_USB);
