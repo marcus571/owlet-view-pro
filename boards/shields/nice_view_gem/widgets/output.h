@@ -10,6 +10,8 @@ struct output_status_state {
     int active_profile_index;
     bool active_profile_connected;
     bool active_profile_bonded;
+    /* USB 是否真实枚举就绪（图标依据，不能用可能未初始化的 selected_endpoint） */
+    bool usb_hid_ready;
 };
 #else
 struct peripheral_status_state {
