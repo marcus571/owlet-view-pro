@@ -1,13 +1,13 @@
 // boards/shields/nice_view_gem/widgets/screen.c
 //
-// 2026-11-21 修复记录：
-//   1. 充电事件改用 ZMK_DISPLAY_WIDGET_LISTENER：事件线程只拷贝状态并投递到
-//      display 工作队列，所有 LVGL 绘制一律在 display 线程执行。
-//      原裸 ZMK_SUBSCRIPTION 会在系统 workqueue(poll_handler 所在线程)里
-//      直接操作 LVGL，与 display 线程并发导致轮询链卡死、数据冻结。
-//   2. swap_work / revert_work 全部提交到 zmk_display_work_q()，
-//      不再落在 k_sysworkq 上操作 LVGL。
-//   3. get_state 兼容 eh==NULL（宏的 _init() 会以 NULL 调用）。
+// 2026-11-21 修改记录（第五轮）：
+//   1. 拔线（is_charging=false，数据已由主仓库清零）：立即切回主屏，
+//      删除原 30 秒延时回落机制（revert_work）。
+//   2. 充满未拔线：is_charging 保持 true，充电屏停留等拔线（原逻辑不变）。
+//   3. 彻底移除调试计数器 debug_recv_count（显示端已不引用）。
+//   4. 充电事件仍走 ZMK_DISPLAY_WIDGET_LISTENER：事件线程只拷贝状态，
+//      所有 LVGL 绘制在 display 线程执行；swap_work  likewise 提交到
+//      display 队列。
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
@@ -33,9 +33,6 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 /* 直接引用主仓库暴露出来的头文件 */
 #include "owlet_charger_event.h"
-
-/* 调试用：统计 UI 实际收到并绘制的充电事件次数 */
-volatile uint32_t debug_recv_count = 0;
 
 static sys_slist_t widgets = SYS_SLIST_STATIC_INIT(&widgets);
 
@@ -93,46 +90,27 @@ void zmk_widget_screen_toggle(void) {
     k_work_submit_to_queue(zmk_display_work_q(), &swap_work);
 }
 
-/* 30 秒延时切回 Screen 0（同样在 display 线程执行） */
-static void revert_to_screen0_cb(struct k_work *work) {
-    struct zmk_widget_screen *widget;
-    SYS_SLIST_FOR_EACH_CONTAINER(&widgets, widget, node) {
-        if (widget->current_screen == SCREEN_1 && !current_charger_state.is_charging) {
-            widget->current_screen = SCREEN_0;
-            draw_all(widget->obj, widget);
-        }
-    }
-}
-static K_WORK_DELAYABLE_DEFINE(revert_work, revert_to_screen0_cb);
-
 /* ---------- 充电状态：在 display 线程更新 UI ---------- */
 static void charger_status_update_cb(struct owlet_charger_state_changed state) {
-    debug_recv_count++;
     current_charger_state = state;
 
     struct zmk_widget_screen *widget;
 
     if (state.is_charging) {
-        k_work_cancel_delayable(&revert_work);
-
         SYS_SLIST_FOR_EACH_CONTAINER(&widgets, widget, node) {
-            /* 只有用户没有手动切走时，才强制锁定在 SCREEN_1 */
+            /* 只有用户没有手动切走时，才强制锁定在 SCREEN_1；
+             * 充满未拔线时 is_charging 仍为 true，充电屏保持停留 */
             if (!widget->user_override) {
                 widget->current_screen = SCREEN_1;
             }
             draw_all(widget->obj, widget);
         }
     } else {
+        /* 拔线：数据已清零，立即切回主屏，不再延时回落 */
         SYS_SLIST_FOR_EACH_CONTAINER(&widgets, widget, node) {
             widget->user_override = false;
-        }
-
-        k_work_reschedule_for_queue(zmk_display_work_q(), &revert_work, K_SECONDS(30));
-
-        SYS_SLIST_FOR_EACH_CONTAINER(&widgets, widget, node) {
-            if (widget->current_screen == SCREEN_1) {
-                draw_all(widget->obj, widget);
-            }
+            widget->current_screen = SCREEN_0;
+            draw_all(widget->obj, widget);
         }
     }
 }
