@@ -1,14 +1,12 @@
 // boards/shields/nice_view_gem/widgets/screen_charge.c
 //
 // 2026-11-21 修改记录：
-//   电压行增加字段名 V:，与 Type/Set/Time/SOC/Chg 风格一致。
+//   电压行字段名定为 VBAT，去掉调试计数器与末尾 V 后缀，
+//   "VBAT:3.91" 共 9 字符（约 72px），保证在 76px 右栏内单行显示。
 #include "screen_charge.h"
 #include "util.h"
 #include "../assets/custom_fonts.h"
 #include <stdio.h>
-
-/* 引入外部调试变量 */
-extern volatile uint32_t debug_recv_count;
 
 /* 提取并格式化电流值 */
 static void format_current(char *buf, size_t len, uint16_t current_ma) {
@@ -82,8 +80,8 @@ void draw_charge_screen(lv_obj_t *canvas, const struct owlet_charger_state_chang
     snprintf(text, sizeof(text), "Chg:%s", chrg_str);
     lv_canvas_draw_text(canvas, 84, 28, 76, &label_dsc, text);
 
-    // 3. 电池电压 + 调试计数器
+    // 3. 电池电压（VBAT 字段名自带单位语义，省略 V 后缀保证单行）
     uint16_t mv = state->battery_voltage_mv;
-    snprintf(text, sizeof(text), "VBAT:%u.%02uV%u", mv / 1000, (mv % 1000) / 10, debug_recv_count);
+    snprintf(text, sizeof(text), "VBAT:%u.%02u", mv / 1000, (mv % 1000) / 10);
     lv_canvas_draw_text(canvas, 84, 48, 76, &label_dsc, text);
 }
