@@ -21,6 +21,8 @@ struct status_state {
     int active_profile_index;
     bool active_profile_connected;
     bool active_profile_bonded;
+    /* USB 真实枚举就绪状态，供中栏 USB 图标判断 */
+    bool usb_hid_ready;
     uint8_t layer_index;
     uint32_t layer_mask;
 #else
