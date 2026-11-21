@@ -79,7 +79,8 @@ void draw_charge_screen(lv_obj_t *canvas, const struct owlet_charger_state_chang
     snprintf(text, sizeof(text), "Chg:%s", chrg_str); 
     lv_canvas_draw_text(canvas, 84, 28, 76, &label_dsc, text);
 
-    // 3. 临时替换：显示回调触发次数 (如果有数字，说明事件绝对到了)
-    snprintf(text, sizeof(text), "Cnt:%u", debug_recv_count);
+    // 3. 电池电压 + 调试计数器
+    uint16_t mv = state->battery_voltage_mv;
+    snprintf(text, sizeof(text), "%u.%02uV%u", mv / 1000, (mv % 1000) / 10, debug_recv_count);
     lv_canvas_draw_text(canvas, 84, 48, 76, &label_dsc, text);
 }
