@@ -1,4 +1,7 @@
 // boards/shields/nice_view_gem/widgets/screen_charge.c
+//
+// 2026-11-21 修改记录：
+//   电压行增加字段名 V:，与 Type/Set/Time/SOC/Chg 风格一致。
 #include "screen_charge.h"
 #include "util.h"
 #include "../assets/custom_fonts.h"
@@ -38,7 +41,7 @@ void draw_charge_screen(lv_obj_t *canvas, const struct owlet_charger_state_chang
     lv_canvas_draw_rect(canvas, 80, 4, 1, 61, &line_dsc);
 
     /* --- 左栏 (X = 4, 宽 76) --- */
-    
+
     // 1. 充电接口类型
     const char *type_str = "UNK";
     if (state->vbus_stat == 1 || state->vbus_stat == 2) {
@@ -46,25 +49,25 @@ void draw_charge_screen(lv_obj_t *canvas, const struct owlet_charger_state_chang
     } else if (state->vbus_stat == 3) {
         type_str = "CHG";
     }
-    snprintf(text, sizeof(text), "Type:%s", type_str); 
+    snprintf(text, sizeof(text), "Type:%s", type_str);
     lv_canvas_draw_text(canvas, 4, 8, 76, &label_dsc, text);
 
     // 2. 设定的充电电流 (使用 ichg_ma)
     char cur_str[16];
     format_current(cur_str, sizeof(cur_str), state->ichg_ma);
-    snprintf(text, sizeof(text), "Set:%s", cur_str); 
+    snprintf(text, sizeof(text), "Set:%s", cur_str);
     lv_canvas_draw_text(canvas, 4, 28, 76, &label_dsc, text);
 
     // 3. 充电时长
     char time_str[16];
     format_duration(time_str, sizeof(time_str), state->charge_duration_s);
-    snprintf(text, sizeof(text), "Time:%s", time_str); 
+    snprintf(text, sizeof(text), "Time:%s", time_str);
     lv_canvas_draw_text(canvas, 4, 48, 76, &label_dsc, text);
 
     /* --- 右栏 (X = 84, 宽 76) --- */
 
     // 1. 电池电量
-    snprintf(text, sizeof(text), "SOC:%u%%", state->battery_soc); 
+    snprintf(text, sizeof(text), "SOC:%u%%", state->battery_soc);
     lv_canvas_draw_text(canvas, 84, 8, 76, &label_dsc, text);
 
     // 2. 充电状态
@@ -76,11 +79,11 @@ void draw_charge_screen(lv_obj_t *canvas, const struct owlet_charger_state_chang
     } else if (state->chrg_stat == 3) {
         chrg_str = "FULL";
     }
-    snprintf(text, sizeof(text), "Chg:%s", chrg_str); 
+    snprintf(text, sizeof(text), "Chg:%s", chrg_str);
     lv_canvas_draw_text(canvas, 84, 28, 76, &label_dsc, text);
 
     // 3. 电池电压 + 调试计数器
     uint16_t mv = state->battery_voltage_mv;
-    snprintf(text, sizeof(text), "%u.%02uV%u", mv / 1000, (mv % 1000) / 10, debug_recv_count);
+    snprintf(text, sizeof(text), "VBAT:%u.%02uV%u", mv / 1000, (mv % 1000) / 10, debug_recv_count);
     lv_canvas_draw_text(canvas, 84, 48, 76, &label_dsc, text);
 }
