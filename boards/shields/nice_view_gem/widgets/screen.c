@@ -1,13 +1,11 @@
 // boards/shields/nice_view_gem/widgets/screen.c
 //
-// 2026-11-21 修改记录（第五轮）：
-//   1. 拔线（is_charging=false，数据已由主仓库清零）：立即切回主屏，
-//      删除原 30 秒延时回落机制（revert_work）。
-//   2. 充满未拔线：is_charging 保持 true，充电屏停留等拔线（原逻辑不变）。
-//   3. 彻底移除调试计数器 debug_recv_count（显示端已不引用）。
-//   4. 充电事件仍走 ZMK_DISPLAY_WIDGET_LISTENER：事件线程只拷贝状态，
-//      所有 LVGL 绘制在 display 线程执行；swap_work  likewise 提交到
-//      display 队列。
+// 2026-11-21 修改记录（第六轮）：
+//   输出状态增加 usb_hid_ready 字段（取自 zmk_usb_is_hid_ready()），
+//   供中栏 USB 图标使用，修复开机早期端点零初始化(USB=0)导致的图标误显示。
+//   其余逻辑与第五轮一致：拔线立即清零回主屏、充满未拔线停留充电屏、
+//   充电事件走 ZMK_DISPLAY_WIDGET_LISTENER、所有 LVGL 绘制在 display
+//   线程执行、swap_work 同样提交到 display 队列、无调试计数器。
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
@@ -209,6 +207,7 @@ static void set_output_status(struct zmk_widget_screen *widget,
     widget->state.active_profile_index = state->active_profile_index;
     widget->state.active_profile_connected = state->active_profile_connected;
     widget->state.active_profile_bonded = state->active_profile_bonded;
+    widget->state.usb_hid_ready = state->usb_hid_ready;
     draw_all(widget->obj, widget);
 }
 
@@ -223,6 +222,7 @@ static struct output_status_state output_status_get_state(const zmk_event_t *_eh
         .active_profile_index = zmk_ble_active_profile_index(),
         .active_profile_connected = zmk_ble_active_profile_is_connected(),
         .active_profile_bonded = !zmk_ble_active_profile_is_open(),
+        .usb_hid_ready = zmk_usb_is_hid_ready(),
     };
 }
 
